@@ -1,8 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:geocoding/geocoding.dart';
-import 'package:my_api/Model/car.dart';
 import 'package:my_api/View/Home.dart';
-import 'package:my_api/View/MapWidget.dart';
 
 void main() {
   runApp(const MyApp());

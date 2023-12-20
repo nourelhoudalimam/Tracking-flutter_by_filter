@@ -3,17 +3,97 @@ import 'dart:convert';
 
 import 'package:http/http.dart' as http;
 import 'package:get/get.dart';
+import 'package:latlong2/latlong.dart';
 import 'package:my_api/Model/Device.dart';
 import 'package:my_api/Model/chauffeur.dart';
 
 
 class apiController extends GetxController{
   List<Chauffeur> chauffeur=[];
-    final _deviceLocationController = StreamController<Map<String, double>>.broadcast();
+    
+
+  final _deviceLocationController = StreamController<Map<String, double>>.broadcast();
   Stream<Map<String, double>> get deviceLocationStream => _deviceLocationController.stream;
   List<Device> devices=[];
-  Map<String, double>? lastLocation;
+  List<Device> vehicules=[];
 
+    LatLng? markerPosition; // Define markerPosition here
+
+  Map<String, double>? lastLocation;
+  late StreamSubscription<Map<String, double>> locationSubscription = StreamController<Map<String, double>>.broadcast().stream.listen((location) {});
+
+Future<void> initializeListdevice(String code) async {
+ try {
+    await getVehicleLocation(code);
+    print('Fetch terminée');
+ } catch (e) {
+    print('Erreur lors de la récupération des positions : $e');
+ } 
+}
+
+
+Future<void> getVehicleLocation(String deviceCode) async {
+  try {StreamController<String> controller=StreamController<String>();
+    final String? jwt = await getJwt();
+    final apiUrl =
+        'http://35.180.211.234:1111/api/cubeIT/NaviTrack/rest/device/webflux/stream/tracking?code=$deviceCode';
+
+    final response = await http.get(
+      Uri.parse(apiUrl),
+      headers: {'Content-Type': 'text/event-stream', 'Authorization': 'Bearer $jwt'},
+    );
+
+    if (response.statusCode == 200 || response.statusCode == 201) {
+      print('Raw  data: ${response.body}'); // Print raw SSE data
+     // print('Headers: ${response.headers}');
+
+    
+
+      // Process the SSE data line by line
+      response.body.split('\n').forEach((line) {
+        controller.add(line);
+      });
+
+      // Process SSE events
+      controller.stream.listen((String event) {
+        // Split the event into lines
+        final List<String> lines = event.split('\n');
+
+        // Process each line
+        for (final line in lines) {
+          if (line.isNotEmpty) {
+            // Check for the "data" field in the SSE event
+            if (line.startsWith('data:')) {
+              // Extract and parse the JSON data
+              final jsonData = line.substring('data:'.length);
+              try {
+                final Map<String, dynamic> data = json.decode(jsonData);
+                if (data.isNotEmpty) {
+                  devices = [Device.fromJson(data)];
+                  _deviceLocationController.add({
+                    'latitude': double.parse(devices[0].latitude),
+                    'longitude': double.parse(devices[0].longitude),
+                  });
+
+                  update();
+                 
+
+                }
+              } catch (e) {
+                print('Error mapping JSON to device: $e');
+              }
+            }
+          }
+        }
+      });
+    } else {
+      throw Exception(
+          'Failed to load data. Status code: ${response.statusCode},${response.reasonPhrase},${response.body}');
+    }
+  } catch (e) {
+    throw Exception('Error fetching vehicle location: $e');
+  }
+}
 Future<void> initializeJWT() async {
     try {
     
@@ -44,22 +124,13 @@ Future<void> initializeListChauffeurparID(String id) async {
     print('Erreur lors de la récupération des chauffeurs : $e');
   }
   }
-  Future<void> initializeListdevice(String code) async {
-    try {
-    
-     // await exportDataToJsonAndPost();
-       await getVehicleLocation(code);
-  
-  } catch (e) {
-    print('Erreur lors de la récupération des positions : $e');
-  }
-  }
+
 Future<void> initializeListdeviceByFilter(String filter) async {
     try {
     
-     // await exportDataToJsonAndPost();
        await getVehicleLocationByFilter(filter);
-  
+      print('Fetch terminée');
+
   } catch (e) {
     print('Erreur lors de la récupération des positions : $e');
   }
@@ -74,7 +145,6 @@ Future<List<dynamic>> fetchData() async {
     throw Exception('Failed to load data');
   }
 }
-
 Future<String?> getJwt() async {
 
 List<dynamic> jsonDataList = await fetchData();
@@ -122,78 +192,68 @@ Future<void> getChauffeur(String filter) async {
     // Handle errors, e.g., display a message to the user
   }
 }
-Future<void> getVehicleLocation(String deviceCode) async {
-  try {
-    final String? jwt = await getJwt();
-    final apiUrl = 'http://35.180.211.234:1111/api/cubeIT/NaviTrack/rest/device/webflux/stream/tracking?code=$deviceCode';
 
-    final response = await http.get(
-      Uri.parse(apiUrl),
-      headers: {'Content-Type': 'application/json', 'Authorization': 'Bearer $jwt'});
-   
-
-    if (response.statusCode == 200 || response.statusCode == 201) {
-if (response.body.isNotEmpty) {
-
-      final List<dynamic> data = json.decode(response.body);
-      if (data.isNotEmpty) {
-        try{
-      devices = data.map((json) => Device.fromJson(json)).toList();
-  } catch (e) {
-            print('Error mapping JSON to device: $e');
-          }
-      update();
-      } else {
-        throw Exception('No data found for the given device code.');
-      }
-      } else {
-  throw Exception('Empty response from the server.');
-}  
-    } else {
-      throw Exception('Failed to load data. Status code: ${response.statusCode},${response.reasonPhrase},${response.body}');
-    }
-  } catch (e) {
-    print('Error fetching vehicle location: $e');
-    throw Exception('Error fetching vehicle location: $e');
-  }
-}
 
 Future<void> getVehicleLocationByFilter(String filter) async {
-  try {
+  try {StreamController<String> controller=StreamController<String>();
     final String? jwt = await getJwt();
     final apiUrl = 'http://35.180.211.234:1111/api/cubeIT/NaviTrack/rest/device/webflux/stream/track-all-by-filter?filter=$filter';
 
     final response = await http.get(
       Uri.parse(apiUrl),
-      headers: {'Content-Type': 'application/json', 'Authorization': 'Bearer $jwt'});
+      headers: {'Content-Type': 'text/event-stream', 'Authorization': 'Bearer $jwt'});
    
 
-    if (response.statusCode == 200 || response.statusCode == 201) {
-if (response.body.isNotEmpty) {
+if (response.statusCode == 200 || response.statusCode == 201) {
+      print('Raw  data: ${response.body}'); // Print raw SSE data
+     // print('Headers: ${response.headers}');
 
-      final List<dynamic> data = json.decode(response.body);
-      if (data.isNotEmpty) {
-        try{
-      devices = data.map((json) => Device.fromJson(json)).toList();
-  } catch (e) {
-            print('Error mapping JSON to device: $e');
+    
+
+      // Process the SSE data line by line
+      response.body.split('\n').forEach((line) {
+        controller.add(line);
+      });
+
+      // Process SSE events
+      controller.stream.listen((String event) {
+        // Split the event into lines
+        final List<String> lines = event.split('\n');
+
+        // Process each line
+        for (final line in lines) {
+          if (line.isNotEmpty) {
+            // Check for the "data" field in the SSE event
+            if (line.startsWith('data:')) {
+              // Extract and parse the JSON data
+              final jsonData = line.substring('data:'.length);
+              try {
+                final Map<String, dynamic> data = json.decode(jsonData);
+                if (data.isNotEmpty) {
+                  vehicules = [Device.fromJson(data)];
+                  _deviceLocationController.add({
+                    'latitude': double.parse(vehicules[0].latitude),
+                    'longitude': double.parse(vehicules[0].longitude),
+                  });
+
+                  update();
+
+                }
+              } catch (e) {
+                print('Error mapping JSON to device: $e');
+              }
+            }
           }
-      update();
-      } else {
-        throw Exception('No data found for the given device code.');
-      }
-      } else {
-  throw Exception('Empty response from the server.');
-}  
+        }
+      });
     } else {
-      throw Exception('Failed to load data. Status code: ${response.statusCode},${response.reasonPhrase},${response.body}');
+      throw Exception(
+          'Failed to load data. Status code: ${response.statusCode},${response.reasonPhrase},${response.body}');
     }
   } catch (e) {
-    print('Error fetching vehicle location: $e');
     throw Exception('Error fetching vehicle location: $e');
-  }
-}
-
+  
+}}
 
 Future<void> getChauffeurparID(String id) async {
   try {
@@ -270,8 +330,14 @@ Future<void> deleteChauffeur(String chauffeurId) async {
    chauffeur.clear(); // Assuming chauffeur is your list of chauffeurs in apiController
     update(); // Notify the listeners that the list has been cleared
   }
-   Future<void> clearCodeDevice()async {
-   devices.clear(); // Assuming chauffeur is your list of chauffeurs in apiController
-    update(); // Notify the listeners that the list has been cleared
+  Future<void> clearCodeDevice() async {
+    devices.clear();
+    _deviceLocationController.add({}); // Clear the stream controller
+
+    update();
+  }
+   void closeDeviceLocationStream() {
+    _deviceLocationController.close();
+
   }
 }

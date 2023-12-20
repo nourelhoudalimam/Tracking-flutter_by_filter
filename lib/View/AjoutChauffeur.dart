@@ -4,7 +4,6 @@ import 'package:get/get_core/src/get_main.dart';
 import 'package:http/http.dart' as http;
 import 'package:flutter/material.dart';
 import 'package:my_api/Controller/apiController.dart';
-import 'package:my_api/Model/car.dart';
 import 'package:my_api/Service/apiService.dart';
 import 'package:my_api/View/InputCode.dart';
 import 'package:my_api/View/InutFilterVehicule.dart';
@@ -44,7 +43,6 @@ FonctionChauffeur selectedFonction = FonctionChauffeur.CHAUFFEUR;
   bool isLoading = false;
 late apiController controller;
   int? _enteredNumber;
-List<Car> cars=[];
 @override
   void initState() {
     // TODO: implement initState
@@ -60,19 +58,15 @@ List<Car> cars=[];
 
     const url = 'http://35.180.211.234:1111/api/cubeIT/NaviTrack/rest/chauffeurs/create-one'; // Replace with your actual API endpoint
     final Map<String, dynamic> userData = {
-
-            'filter': filterController.text,
-
-      'fullname': fullnameController.text,
+         'filter': filterController.text,
+   'fullname': fullnameController.text,
       'cin': cinController.text,
       'email': emailController.text,
       'permis': permisController.text,
       'tele': teleController.text,
       'fonction':selectedFonction.toString().split('.').last,
-      'score_avg':_enteredNumber
-    };
-
-    try {
+      'score_avg':_enteredNumber };
+ try {
       final response = await http.post(
         Uri.parse(url),
         headers: <String, String>{

@@ -1,42 +1,67 @@
-import 'package:my_api/Model/locatime.dart';
 
-class Device{
-  
+class Device {
   String id;
-   String code;
-String longitude;
-String latitude;
-int effective_speed;
-int engine_rpm;
-int engine_temperature;
-int fuel_level;
-int kilometrage;
-int batterie_voltage;
-int charge_moteur;
-String timestamp;
-String filter;
-Localtime engine_on_time;
-Device({required this.timestamp,required this.filter,required this.charge_moteur,required this.engine_on_time,required this.kilometrage,required this.id,required this.code,required this.latitude,required this.longitude,required this.batterie_voltage,required this.effective_speed,required this.engine_rpm,required this.engine_temperature ,required this.fuel_level});
- factory Device.fromJson( dynamic json) {
+  String code;
+  String longitude;
+  String latitude;
+  int effectiveSpeed;
+  int engineRpm;
+  int engineTemperature;
+  int fuelLevel;
+  int kilometrage;
+  int batterieVoltage;
+  int chargeMoteur;
+  String timestamp;
+  List<int> engineOnTime;
+
+  Device({
+    required this.id,
+    required this.code,
+    required this.longitude,
+    required this.latitude,
+    required this.effectiveSpeed,
+    required this.engineRpm,
+    required this.engineTemperature,
+    required this.fuelLevel,
+    required this.kilometrage,
+    required this.batterieVoltage,
+    required this.chargeMoteur,
+    required this.timestamp,
+    required this.engineOnTime,
+  });
+
+  factory Device.fromJson(Map<String, dynamic> json) {
     return Device(
-    filter  : json['filter'] ,
-
-    id: json['id'] ?? "",
-   code  : json['code'] ,
-   longitude    : json['longitude'] ?? "",
-   latitude      : json['latitude'] ?? "",
-   effective_speed        : json['effective_speed'] ?? 0,
-  engine_rpm           : json['engine_rpm'] ?? 0,
-   engine_temperature             : json['engine_temperature'] ?? 0,
-    fuel_level:   json['fuel_level'] ?? 0,
-
-   kilometrage: json['kilometrage'] ?? 0,
-   batterie_voltage: json['batterie_voltage'] ?? 0,
-   charge_moteur: json['charge_moteur'] ?? 0,
-      engine_on_time: Localtime.fromJson(json['engine_on_time'] ?? {}),
-   timestamp: json['timestamp'] ??"",
-
+      id: json['id'] ?? "",
+      code: json['code'] ?? "",
+      longitude: json['longitude'] ?? "",
+      latitude: json['latitude'] ?? "",
+      effectiveSpeed: json['effective_speed'] ?? 0,
+      engineRpm: json['engine_rpm'] ?? 0,
+      engineTemperature: json['engine_temperature'] ?? 0,
+      fuelLevel: json['fuel_level'] ?? 0,
+      kilometrage: json['kilometrage'] ?? 0,
+      batterieVoltage: json['batterie_voltage'] ?? 0,
+      chargeMoteur: json['charge_moteur'] ?? 0,
+      timestamp: json['timestamp'] ?? "",
+      engineOnTime: List<int>.from(json['engine_on_time'] ?? []),
     );
-
+  }
+   Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'code':code,
+      'longitude': longitude,
+      'latitude': latitude,
+      'kilometrage': kilometrage,
+      'engine_rpm': engineRpm,
+      'engine_on_time': engineOnTime,
+      'engine_temperature': engineTemperature,
+      'fuel_level': fuelLevel,
+      'effective_speed': effectiveSpeed,
+      'timestamp': timestamp,
+'charge_moteur':chargeMoteur,
+'batterie_voltage':batterieVoltage
+    };
   }
 }
