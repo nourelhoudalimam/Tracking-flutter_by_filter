@@ -3,6 +3,7 @@ import 'package:http/http.dart' as http;
 import 'package:flutter/material.dart';
 import 'package:my_api/Controller/apiController.dart';
 import 'package:my_api/View/login.dart';
+import 'package:my_api/main.dart';
 
 class SignUp extends StatefulWidget {
 //  final ApiService apiService;
@@ -70,6 +71,9 @@ late apiController controller;
         // You may navigate to the next screen or handle the success accordingly
         
       } else {
+         ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(content: Text('Signup failed: ${response.reasonPhrase}')),
+                        );
         // Signup failed
         print('Signup failed: ${response.statusCode}');
         print('Response body: ${response.body}');
@@ -77,8 +81,12 @@ late apiController controller;
         // Handle the failure, show an error message, etc.
       }
     } catch (error) {
+         ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(content: Text('Error during signup: $error')),
+                        );
       // An error occurred during the request
-      print('Error during signup: $error');
+            print('Error during signup: $error');
+
       // Handle the error, show an error message, etc.
     }
   }
@@ -104,7 +112,7 @@ TextFormField(
     prefixIcon: Icon(Icons.abc),
     ),
         validator:(value) {
-bool fullnameValid = RegExp(r'^[a-zA-Z]').hasMatch(value!);
+bool fullnameValid = RegExp(r'^[a-zA-Z]{3,40}$').hasMatch(value!);
 
           if(value.isEmpty ){return "Enter Fullname";}
        else if(!fullnameValid || (fullnameController.text.length<3 && fullnameController.text.length >40)){
@@ -121,12 +129,13 @@ bool fullnameValid = RegExp(r'^[a-zA-Z]').hasMatch(value!);
     prefixIcon: Icon(Icons.supervised_user_circle),
     ),
         validator:(value) {
-bool usernameValid = RegExp(r'^[a-zA-Z0-9._%+-]').hasMatch(value!);
+bool usernameValid = RegExp(r'^[a-zA-Z0-9._%+-]{3,20}$').hasMatch(value!);
 
           if(value.isEmpty){return "Enter Username";}
        else if(!usernameValid || (usernameController.text.length<3 && usernameController.text.length >20)){
           return "Enter valid username";
         }
+        
         }
 
 ),
@@ -167,9 +176,11 @@ bool emailValid = RegExp(r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$').ha
      
     )),
    validator:(value) {
+    bool passwordValid = RegExp(r'^[a-zA-Z0-9._%+-]{6,40}$').hasMatch(value!);
+
           if(value!.isEmpty){return "Enter password";}
         
-        else if(passwordController.text.length<6 && passwordController.text.length>40 ){
+        else if(!passwordValid||(passwordController.text.length<6 && passwordController.text.length>40) ){
           return "Password length should be more than 6 characters and less than 40 characters";
         }
         }    ),
@@ -182,7 +193,7 @@ TextFormField(
     prefixIcon: Icon(Icons.filter_2),
     ),
         validator:(value) {
-bool filterValid = RegExp(r'^[a-zA-Z0-9._%+-]').hasMatch(value!);
+bool filterValid = RegExp(r'^[a-zA-Z0-9._%+-]{5,50}$').hasMatch(value!);
 
           if(value.isEmpty){return "Enter Filter";}
        else if(!filterValid || (filterController.text.length >50 &&filterController.text.length<5)){
@@ -202,6 +213,7 @@ bool filterValid = RegExp(r'^[a-zA-Z0-9._%+-]').hasMatch(value!);
             onChanged: (String? newValue) {
               setState(() {
                 selectedRole = newValue!;
+                
               });
             },
             items: <String>['','ROLE_USER', 'ROLE_ADMIN', 'ROLE_MODERATOR']

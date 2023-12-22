@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+/*import 'package:flutter/material.dart';
 import 'package:my_api/Service/apiService.dart';
 import 'package:my_api/View/MapByFilter.dart';
 
@@ -25,7 +25,7 @@ class _LoadingPageState extends State<LoadingMapFilter> {
     Navigator.pushReplacement(
       context,
       MaterialPageRoute(
-        builder: (context) => MapByFilter(filterValue: widget.filterValue, apiService: widget.apiService),
+        builder: (context) => MapByFilter(apiService: widget.apiService),
       ),
     );
   }
@@ -39,3 +39,4 @@ class _LoadingPageState extends State<LoadingMapFilter> {
     );
   }
 }
+*/

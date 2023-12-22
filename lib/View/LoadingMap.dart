@@ -24,12 +24,12 @@ class _LoadingPageState extends State<LoadingMap> {
   void _handleLogin() async {
     await Future.delayed(Duration(seconds: 2));
 
-    Navigator.pushReplacement(
+   /* Navigator.pushReplacement(
       context,
       MaterialPageRoute(
-        builder: (context) => MapWidget(codeValue: widget.codeValue, apiService: widget.apiService),
+        builder: (context) => MapWidget( apiService: widget.apiService),
       ),
-    );
+    );*/
   }
 
   @override

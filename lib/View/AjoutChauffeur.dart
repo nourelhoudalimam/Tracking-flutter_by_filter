@@ -1,4 +1,4 @@
-import 'dart:convert';
+/*import 'dart:convert';
 import 'package:get/get.dart';
 import 'package:get/get_core/src/get_main.dart';
 import 'package:http/http.dart' as http;
@@ -83,6 +83,9 @@ late apiController controller;
         // You may navigate to the next screen or handle the success accordingly
         
       } else {
+            ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(content: Text('adding failed: ${response.statusCode}. Please try again,Response body: ${response.body}')),
+                        );
         // Signup failed
         print('adding failed: ${response.statusCode}');
         print('Response body: ${response.body}');
@@ -90,6 +93,10 @@ late apiController controller;
         // Handle the failure, show an error message, etc.
       }
     } catch (error) {
+      
+            ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(content: Text('Error during add: $error')),
+                        );
       // An error occurred during the request
       print('Error during add: $error');
       // Handle the error, show an error message, etc.
@@ -363,4 +370,4 @@ child:Text("Get Devices by filter",style:TextStyle(color:Colors.white)), ),  ]
  
 
 
-}
+}*/

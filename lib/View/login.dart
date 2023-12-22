@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:my_api/Service/apiService.dart';
 import 'package:my_api/View/Loading.dart';
 import 'package:http/http.dart' as http;
+import 'package:my_api/main.dart';
 
 class login extends StatefulWidget {
 //  final ApiService apiService;
@@ -52,7 +53,6 @@ isLogin=false;
 
   if (response.statusCode == 200 || response.statusCode == 201) {
     // Successful login 
-    // Successful login 
      
     final Map<String, dynamic> data = json.decode(response.body);
     // Handle the response data, e.g., save authentication token
@@ -63,30 +63,13 @@ isLogin=false;
                             builder: (context) => LoadingPages(apiService: apiService),
                           ),
                         );
-    final Uri Url = Uri.parse('http://192.168.1.26:3000/jwt');
-    final Map<String, dynamic> jwtToken = {
-      'jwt': data['token']
-    };
-    final http.Response serverResponse = await http.post(
-      Url,
-      headers: <String, String>{
-        'Content-Type': 'application/json',
-      },
-      body: jsonEncode(jwtToken),
-    );
-
-    if (serverResponse.statusCode == 200 || serverResponse.statusCode == 201) {
-      print('jwt added successfully to server');
-    } else {
-      // Failed login
-      print('Jwt not added : ${serverResponse.statusCode}');
-      print('Response body: ${serverResponse.body}');
-    }
+    jwt=data['token'];
+    print('JWT:$jwt');
   } else {
     // Failed login
     print('Login failed : ${response.statusCode}');
     ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(content: Text('Login failed. Please try again.')),
+                          SnackBar(content: Text('Login failed. Please try again., ${response.reasonPhrase}')),
                         );
     print('Response body: ${response.body}');
   }
@@ -116,7 +99,7 @@ isLogin=false;
     prefixIcon: Icon(Icons.supervised_user_circle),
     ),
         validator:(value) {
-bool usernameValid = RegExp(r'^[a-zA-Z0-9._%+-]').hasMatch(value!);
+bool usernameValid = RegExp(r'^[a-zA-Z0-9._%+-]{3,20}$').hasMatch(value!);
 
           if(value.isEmpty){return "Enter Username";}
        else if(!usernameValid || (usernameController.text.length<3 && usernameController.text.length >20)){
@@ -144,9 +127,11 @@ bool usernameValid = RegExp(r'^[a-zA-Z0-9._%+-]').hasMatch(value!);
      
     )),
    validator:(value) {
+    bool passwordValid = RegExp(r'^[a-zA-Z0-9._%+-]{6,40}$').hasMatch(value!);
+
           if(value!.isEmpty){return "Enter password";}
         
-        else if(passwordController.text.length<6 && passwordController.text.length>40 ){
+        else if(!passwordValid ||(passwordController.text.length<6 && passwordController.text.length>40) ){
           return "Password length should be more than 6 characters and less than 40 characters";
         }
         }    ),

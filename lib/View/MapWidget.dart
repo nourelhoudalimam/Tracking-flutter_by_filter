@@ -1,17 +1,16 @@
-import 'dart:async';
+/*import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:get/get.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:my_api/Controller/apiController.dart';
 import 'package:my_api/Service/apiService.dart';
-import 'package:my_api/View/InputCode.dart';
+import 'package:my_api/View/menu.dart';
 
 class MapWidget extends StatefulWidget {
- String codeValue;
-  final ApiService apiService;
+     ApiService apiService = ApiService("NourelHoudaLimam/24051999/09892244");
 
-  MapWidget({required this.codeValue, required this.apiService});
+  MapWidget({ required this.apiService});
 
   @override
   _MapWidgetState createState() => _MapWidgetState();
@@ -27,7 +26,7 @@ class _MapWidgetState extends State<MapWidget> {
   void initState() {
     super.initState();
     controller = Get.put(apiController());
-    controller.initializeListdevice(widget.codeValue);
+    controller.initializeForCode();
 
     locationSubscription = controller.deviceLocationStream.listen(_handleDeviceLocationUpdate);
 
@@ -37,10 +36,10 @@ class _MapWidgetState extends State<MapWidget> {
     });
   }
 
-  Future<void> _clearData() async {
+ /* Future<void> _clearData() async {
     widget.codeValue = '';
     await controller.clearCodeDevice();
-  }
+  }*/
 
   @override
   void dispose() {
@@ -65,7 +64,8 @@ class _MapWidgetState extends State<MapWidget> {
   }
 
  Future<void> _moveDevice() async {
-  await controller.getVehicleLocation(widget.codeValue);
+  await controller.getUserInfoForCode();
+
   setState(() {}); // Trigger a rebuild to update marker positions
 }
 
@@ -127,11 +127,11 @@ class _MapWidgetState extends State<MapWidget> {
           minWidth: 500,
           color: Colors.blue,
           onPressed: () async {
-            await _clearData();
+           
             Navigator.push(
               context,
               MaterialPageRoute(
-                builder: (context) => inputCode(),
+                builder: (context) => Menu(apiService:widget.apiService),
               ),
             );
           },
@@ -141,3 +141,4 @@ class _MapWidgetState extends State<MapWidget> {
     );
   }
 }
+*/

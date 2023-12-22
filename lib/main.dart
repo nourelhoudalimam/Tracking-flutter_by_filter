@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:my_api/View/Home.dart';
-
+String? jwt="";
 void main() {
   runApp(const MyApp());
 

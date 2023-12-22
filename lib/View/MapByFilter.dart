@@ -1,17 +1,20 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
+import 'package:geocoding/geocoding.dart';
 import 'package:get/get.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:my_api/Controller/apiController.dart';
+import 'package:my_api/Model/Device.dart';
+import 'package:my_api/Model/Vehicle.dart';
 import 'package:my_api/Service/apiService.dart';
-import 'package:my_api/View/InutFilterVehicule.dart';
+import 'package:my_api/View/Home.dart';
 
 class MapByFilter extends StatefulWidget {
- String filterValue;
   final ApiService apiService;
+  
 
-  MapByFilter({required this.filterValue, required this.apiService});
+  MapByFilter({required this.apiService});
 
   @override
   _MapWidgetState createState() => _MapWidgetState();
@@ -20,16 +23,20 @@ class MapByFilter extends StatefulWidget {
 class _MapWidgetState extends State<MapByFilter> {
   late final apiController controller;
   late StreamSubscription<Map<String, double>>? locationSubscription;
-  LatLng? markerPosition;
-  MapController mapController = MapController(); // Added MapController
+  List<Marker> markers = [];
+Map<String, String> previousCodes = {};
+Map<String, Marker> existingMarkers = {};
+
+  MapController mapController = MapController();
 
   @override
   void initState() {
     super.initState();
     controller = Get.put(apiController());
-    controller.initializeListdeviceByFilter(widget.filterValue);
+    controller.initialize();
 
-    locationSubscription = controller.deviceLocationStream.listen(_handleDeviceLocationUpdate);
+    locationSubscription =
+        controller.deviceLocationStream.listen(_handleDeviceLocationUpdate);
 
     // Set up a timer to simulate the movement of the device every second
     Timer.periodic(Duration(seconds: 5), (Timer t) {
@@ -37,39 +44,84 @@ class _MapWidgetState extends State<MapByFilter> {
     });
   }
 
-  Future<void> _clearData() async {
-    widget.filterValue = '';
-    await controller.clearCodeDevice();
-  }
-
   @override
   void dispose() {
-    // Dispose of the timer to prevent memory leaks
     locationSubscription?.cancel();
     controller.closeDeviceLocationStream();
     super.dispose();
   }
 
-  void _handleDeviceLocationUpdate(Map<String, double> location) {
-    setState(() {
-      if (controller.vehicules.isNotEmpty) {
-        markerPosition = LatLng(
-          location['latitude'] ?? 0.0,
-          location['longitude'] ?? 0.0,
-        );
-        print("Track marker position: $markerPosition");
-                mapController.move(markerPosition!, 7.0);
+void _handleDeviceLocationUpdate(Map<String, double> location) {
+  setState(() {
+    markers = controller.vehicules.map((car) {
+      // Use 'car' instead of 'voitures' since 'car' is the variable for the outer map
+      return Marker(
+        width: 30.0,
+        height: 30.0,
+        point: LatLng(
+          double.parse(car.latitude),
+          double.parse(car.longitude),
+        ),
+        builder: (context) => GestureDetector(
+          onTap: () async {
+            LatLng markerLocation = LatLng(double.parse(car.latitude), double.parse(car.longitude));
 
-      }
-    });
-  }
+            // Reverse geocode to get the address
+            List<Placemark> placemarks =
+                await placemarkFromCoordinates(markerLocation.latitude, markerLocation.longitude);
 
- Future<void> _moveDevice() async {
-  await controller.getVehicleLocationByFilter(widget.filterValue);
-  setState(() {}); // Trigger a rebuild to update marker positions
+            // Show a pop-up with information
+            showDialog(
+              context: context,
+              builder: (context) => AlertDialog(
+                title: Text('Vehicle Information'), // Updated title to 'Vehicle Information'
+                content: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text('id: ${car.id}'),
+                    Text('Code: ${car.code}'),
+                    Text('Kilometrage: ${car.kilometrage}'),
+                    Text('Fuel level: ${car.fuelLevel}'),
+                    Text('Effective speed: ${car.effectiveSpeed}'),
+                    Text('Engine RPM: ${car.engineRpm}'),
+                    Text('Engine temperature: ${car.engineTemperature}'),
+                    Text('Charge moteur: ${car.chargeMoteur}'),
+                    Text('Batterie Voltage: ${car.batterieVoltage}'),
+                    Text('Latitude: ${markerLocation.latitude}'),
+                    Text('Longitude: ${markerLocation.longitude}'),
+                    Text('Address: ${placemarks.isNotEmpty ? placemarks[0].name : 'Unknown'}'),
+                    // Add more information as needed
+                  ],
+                ),
+                actions: [
+                  TextButton(
+                    onPressed: () {
+                      Navigator.of(context).pop();
+                    },
+                    child: Text('OK'),
+                  ),
+                ],
+              ),
+            );
+          },
+          child: Container(
+            child: Image.asset(
+              'images/images.png',
+              width: 30.0,
+              height: 30.0,
+            ),
+          ),
+        ),
+      );
+    }).toList();
+  });
 }
 
-
+  Future<void> _moveDevice() async {
+    await controller.getUserInfo();
+    setState(() {});
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -79,8 +131,6 @@ class _MapWidgetState extends State<MapByFilter> {
           child: StreamBuilder<Map<String, double>>(
             stream: controller.deviceLocationStream,
             builder: (context, snapshot) {
-              print('Current markerPosition: $markerPosition');
-
               return FlutterMap(
                 mapController: mapController,
                 options: MapOptions(
@@ -92,31 +142,7 @@ class _MapWidgetState extends State<MapByFilter> {
                     urlTemplate: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
                     subdomains: ['a', 'b', 'c'],
                   ),
-                  MarkerLayerOptions(
-                    markers: [
-                      if (markerPosition != null)
-                        Marker(
-                          width: 30.0,
-                          height: 30.0,
-                          point: LatLng(
-                            markerPosition!.latitude,
-                            markerPosition!.longitude,
-                          ),
-                          builder: (context) => GestureDetector(
-                            onTap: () async {
-                              // Handle marker tap event
-                            },
-                            child: Container(
-                              child: Image.asset(
-                                'images/images.png',
-                                width: 30.0,
-                                height: 30.0,
-                              ),
-                            ),
-                          ),
-                        ),
-                    ],
-                  ),
+                  MarkerLayerOptions(markers: markers),
                 ],
               );
             },
@@ -127,11 +153,10 @@ class _MapWidgetState extends State<MapByFilter> {
           minWidth: 500,
           color: Colors.blue,
           onPressed: () async {
-            await _clearData();
             Navigator.push(
               context,
               MaterialPageRoute(
-                builder: (context) => inputFilterVehicule(),
+                builder: (context) => Home(),
               ),
             );
           },

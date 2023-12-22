@@ -3,36 +3,54 @@ import 'dart:convert';
 
 import 'package:http/http.dart' as http;
 import 'package:get/get.dart';
+import 'package:http/http.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:my_api/Model/Device.dart';
+import 'package:my_api/Model/Vehicle.dart';
 import 'package:my_api/Model/chauffeur.dart';
+import 'package:my_api/Model/user.dart';
+import 'package:my_api/main.dart';
 
 
 class apiController extends GetxController{
   List<Chauffeur> chauffeur=[];
-    
+    late User user;
 
   final _deviceLocationController = StreamController<Map<String, double>>.broadcast();
   Stream<Map<String, double>> get deviceLocationStream => _deviceLocationController.stream;
   List<Device> devices=[];
-  List<Device> vehicules=[];
-
+   List<Device> vehicules=[];
     LatLng? markerPosition; // Define markerPosition here
+List<Vehicle> vehicle=[];
 
   Map<String, double>? lastLocation;
   late StreamSubscription<Map<String, double>> locationSubscription = StreamController<Map<String, double>>.broadcast().stream.listen((location) {});
 
-Future<void> initializeListdevice(String code) async {
+/*Future<void> initializeListdevice(String code) async {
  try {
     await getVehicleLocation(code);
     print('Fetch terminée');
  } catch (e) {
     print('Erreur lors de la récupération des positions : $e');
  } 
+}*/
+/*Future<void> initializeForCode() async {
+ try {
+    await getUserInfoForCode();
+    print('Processus terminée');
+ } catch (e) {
+    print('Erreur lors de la récupération des datas : $e');
+ } 
+}*/
+Future<void> initialize() async {
+ try {
+    await getUserInfo();
+    print('Processus terminée');
+ } catch (e) {
+    print('Erreur lors de la récupération des datas : $e');
+ } 
 }
-
-
-Future<void> getVehicleLocation(String deviceCode) async {
+/*Future<void> getVehicleLocation(String deviceCode) async {
   try {StreamController<String> controller=StreamController<String>();
     final String? jwt = await getJwt();
     final apiUrl =
@@ -123,7 +141,7 @@ Future<void> initializeListChauffeurparID(String id) async {
   } catch (e) {
     print('Erreur lors de la récupération des chauffeurs : $e');
   }
-  }
+  }*/
 
 Future<void> initializeListdeviceByFilter(String filter) async {
     try {
@@ -136,7 +154,7 @@ Future<void> initializeListdeviceByFilter(String filter) async {
   }
   }
 
-Future<List<dynamic>> fetchData() async {
+/*Future<List<dynamic>> fetchData() async {
   final response = await http.get(Uri.parse('http://192.168.1.26:3000/jwt'));
 
   if (response.statusCode == 200 || response.statusCode == 201) {
@@ -191,12 +209,58 @@ Future<void> getChauffeur(String filter) async {
     print('Erreur lors de la récupération des chauffeurs: $e');
     // Handle errors, e.g., display a message to the user
   }
+}*/
+Future<void> getVehicle(String filter) async {
+  try {
+   
+    final apiUrl = 'http://35.180.211.234:1111/api/cubeIT/NaviTrack/rest/vehicles/get-list-filtered/$filter';
+
+    if (jwt != null) {
+      final response = await http.get(
+        Uri.parse(apiUrl),
+        headers: {'Content-Type': 'application/json', 'Authorization': 'Bearer $jwt'},
+      );
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        final  List<dynamic> data = json.decode(response.body);
+        print("data:$data");
+
+        // Check if the response is not empty
+        if (data.isNotEmpty) {
+          try {
+            // Assuming data is a Map with a key 'user'
+            vehicle =  data.map((json) => Vehicle.fromJson(json)).toList(); 
+                          update();
+
+            
+
+          } catch (e) {
+            print('Error mapping JSON to Vehicle: $e');
+          }
+        } else {
+          print('Empty response received');            
+
+        }
+      } else {
+        print('Échec de la récupération des véhicules. Erreur: ${response.reasonPhrase},${response.statusCode}');
+        // Handle other HTTP status codes if needed
+   }
+    } else {
+      print('JWT non disponible');
+
+
+    }
+  } catch (e) {
+    print('Erreur lors de la récupération des véhicules: $e');
+
+    // Handle errors, e.g., display a message to the user
+  }
 }
 
 
 Future<void> getVehicleLocationByFilter(String filter) async {
   try {StreamController<String> controller=StreamController<String>();
-    final String? jwt = await getJwt();
+ 
     final apiUrl = 'http://35.180.211.234:1111/api/cubeIT/NaviTrack/rest/device/webflux/stream/track-all-by-filter?filter=$filter';
 
     final response = await http.get(
@@ -234,13 +298,14 @@ if (response.statusCode == 200 || response.statusCode == 201) {
                   _deviceLocationController.add({
                     'latitude': double.parse(vehicules[0].latitude),
                     'longitude': double.parse(vehicules[0].longitude),
-                  });
+                  });                  update();
 
-                  update();
+
 
                 }
               } catch (e) {
                 print('Error mapping JSON to device: $e');
+               
               }
             }
           }
@@ -249,13 +314,73 @@ if (response.statusCode == 200 || response.statusCode == 201) {
     } else {
       throw Exception(
           'Failed to load data. Status code: ${response.statusCode},${response.reasonPhrase},${response.body}');
-    }
+ }
   } catch (e) {
     throw Exception('Error fetching vehicle location: $e');
   
 }}
+ Future<void> generateCarDataset(String filter) async{
+  try{await getVehicle(filter);
+}catch(e){
+  print("ERROR");
+  
+}
+}
+  Future<void> getUserInfo() async {
+  try {
+    
+    const apiUrl = 'http://35.180.211.234:1111/api/cubeIT/NaviTrack/rest/user/info/profile';
 
-Future<void> getChauffeurparID(String id) async {
+    if (jwt != null) {
+      final response = await http.get(
+        Uri.parse(apiUrl),
+        headers: {'Content-Type': 'application/json', 'Authorization': 'Bearer $jwt'},
+      );
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        final dynamic data = json.decode(response.body);
+        print("data:$data");
+
+        // Check if the response is not empty
+        if (data.isNotEmpty) {
+          try {
+            // Assuming data is a Map with a key 'user'
+            user = User.fromJson(data); 
+
+          // Access the 'filter' property
+            String filterValue = user.filter;
+            print('Filter value: $filterValue');
+            
+        // Call initializeListDeviceByFilter with the extracted filter
+            await initializeListdeviceByFilter(filterValue);
+       //     await generateCarDataset(filterValue);
+                        update();
+
+          } catch (e) {
+            print('Error mapping JSON to User: $e');
+          }
+        } else {
+          print('Empty response received');
+        }
+      } else {
+        print('Échec de la récupération de current user. Erreur: ${response.reasonPhrase},${response.statusCode}');
+        // Handle other HTTP status codes if needed
+      }
+    } else {
+      print('JWT non disponible');
+      throw Exception('JWT non disponible');
+    }
+  } catch (e) {
+    print('Erreur lors de la récupération des info des users: $e');
+    // Handle errors, e.g., display a message to the user
+  }
+}
+  void closeDeviceLocationStream() {
+    _deviceLocationController.close();
+
+  }
+}
+/*Future<void> getChauffeurparID(String id) async {
   try {
     final String? jwt = await getJwt();
     final apiUrl = 'http://35.180.211.234:1111/api/cubeIT/NaviTrack/rest/chauffeurs/get-one/$id';
@@ -340,4 +465,52 @@ Future<void> deleteChauffeur(String chauffeurId) async {
     _deviceLocationController.close();
 
   }
-}
+  /* Future<void> getUserInfoForCode() async {
+  try {
+    final String? jwt = await getJwt();
+    const apiUrl = 'http://35.180.211.234:1111/api/cubeIT/NaviTrack/rest/user/info/profile';
+
+    if (jwt != null) {
+      final response = await http.get(
+        Uri.parse(apiUrl),
+        headers: {'Content-Type': 'application/json', 'Authorization': 'Bearer $jwt'},
+      );
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        final dynamic data = json.decode(response.body);
+        print("data:$data");
+
+        // Check if the response is not empty
+        if (data.isNotEmpty) {
+          try {
+            // Assuming data is a Map with a key 'user'
+            user = User.fromJson(data); 
+
+          // Access the 'filter' property
+            String filterValue = user.filter;
+            print('Filter value: $filterValue');
+            
+        // Call initializeListDeviceByFilter with the extracted filter
+            await getVehicle(filterValue);
+                update();
+
+          } catch (e) {
+            print('Error mapping JSON to User: $e');
+          }
+        } else {
+          print('Empty response received');
+        }
+      } else {
+        print('Échec de la récupération de current user. Erreur: ${response.reasonPhrase},${response.statusCode}');
+        // Handle other HTTP status codes if needed
+      }
+    } else {
+      print('JWT non disponible');
+      throw Exception('JWT non disponible');
+    }
+  } catch (e) {
+    print('Erreur lors de la récupération des info des users: $e');
+    // Handle errors, e.g., display a message to the user
+  }
+}*/*/
+

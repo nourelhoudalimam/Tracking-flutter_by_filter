@@ -2,11 +2,12 @@
 
 import 'package:flutter/material.dart';
 import 'package:my_api/Service/apiService.dart';
-import 'package:my_api/View/AjoutChauffeur.dart';
+import 'package:my_api/View/MapByFilter.dart';
+import 'package:my_api/View/menu.dart';
 
 
 class LoadingPages extends StatefulWidget {
-  final ApiService apiService;
+     ApiService apiService = ApiService("NourelHoudaLimam/24051999/09892244");
 
   LoadingPages({required this.apiService});
 
@@ -34,7 +35,7 @@ class _LoadingPageState extends State<LoadingPages> {
     Navigator.pushReplacement(
       context,
       MaterialPageRoute(
-        builder: (context) => AjoutChauffeur(),
+        builder: (context) => MapByFilter(apiService: widget.apiService),
       ),
     );
   }
